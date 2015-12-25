@@ -1,0 +1,165 @@
+#! /bin/bash
+pacman -Sy dmidecode git --noconfirm --needed
+
+# COLORS {{{
+    Bold=$(tput bold)
+    Underline=$(tput sgr 0 1)
+    Reset=$(tput sgr0)
+    # Regular Colors
+    Red=$(tput setaf 1)
+    Green=$(tput setaf 2)
+    Yellow=$(tput setaf 3)
+    Blue=$(tput setaf 4)
+    Purple=$(tput setaf 5)
+    Cyan=$(tput setaf 6)
+    White=$(tput setaf 7)
+    # Bold
+    BRed=${Bold}$(tput setaf 1)
+    BGreen=${Bold}$(tput setaf 2)
+    BYellow=${Bold}$(tput setaf 3)
+    BBlue=${Bold}$(tput setaf 4)
+    BPurple=${Bold}$(tput setaf 5)
+    BCyan=${Bold}$(tput setaf 6)
+    BWhite=${Bold}$(tput setaf 7)
+  #}}}
+
+VERSION="0.0.1"
+
+ARCHI=`uname -m`     		# Display whether 32 or 64 bit system
+SYSTEM="Unknown"     	# Display whether system is BIOS or UEFI. Default is "unknown"
+LOCALE="en_US.UTF-8"  	# System locale. Default is "en_US.UTF-8"
+
+echo "${BCyan}Enter your full name:${Reset}"
+read FULL_NAME
+
+echo "${BCyan}Enter your email for GIT:${Reset}"
+read EMAIL
+
+echo "${BCyan}Enter your hostname:${Reset}"
+read HOSTNAME
+
+echo "${BCyan}Enter your username:${Reset}"
+read USER_NAME
+
+echo "${BCyan}Enter your password:${Reset}"
+read PASSWORD
+
+if [[ -f $(pwd)/functions ]]; then
+  source functions
+else
+  echo "missing file: functions"
+  exit 1
+fi
+
+#BASE INSTALL{{{
+base_install(){
+    mirrorlist
+    setlocale
+    settimezone
+    install_mirrorlist_live
+    setup_partitions
+    install_base
+    generate_fstab
+    wireless_software
+    set_locale
+    set_lang
+    set_localtime
+    set_hwclock
+    set_hostname
+    set_root_password
+    add_user
+    edit_sudoers
+    install_mirrorlist_system
+    install_grub
+}
+#}}}
+
+#FRONT INSTALL{{{
+front_install(){
+    echo "${BCyan}Select prefered desktop enviroment.${Reset}"
+    echo "${BCyan}(1) Awesome${Reset}"
+    echo "${BCyan}(2) Gnome${Reset}"
+    read DESKTOP_ENV
+    git_install
+    dot_files_config
+    install_basics
+    aur_support
+    install_xorg
+    install_networkmanager
+    video_driver_install
+    install_audio_drivers
+    install_themes_fonts_icons
+    install_common_apps
+    install_virtualbox
+    if [[ $DESKTOP_ENV == 1 ]]; then
+         install_lightdm
+        install_myawesome
+        setup_touchpad
+        default_directories
+    fi
+    if [[ $DESKTOP_ENV == 2 ]]; then
+        gnome_install
+    fi
+    install_flash
+    install_tlp
+    install_cups
+    install_preload
+    nvm_install
+    install_rbenv_ruby
+}
+#}}}
+
+#FRONT INSTALL{{{
+test_install(){
+    git_install
+    dot_files_config
+    install_basics
+    aur_support
+    #install_xorg
+    #install_networkmanager
+    #video_driver_install
+    #install_lightdm
+    #install_audio_drivers
+    #install_themes_fonts_icons
+    #install_common_apps
+    #install_virtualbox
+    install_myawesome
+    setup_touchpad
+    default_directories
+    #install_flash
+    #install_tlp
+    #install_preload
+    nvm_install
+    install_rbenv_ruby
+}
+#}}}
+
+echo "${BCyan}Do you want to install base setup? Enter 'y' for yes.${Reset}"
+read BASE_INSTALL
+if [[ $BASE_INSTALL == y ]]; then
+    base_install
+fi
+
+# echo "${BCyan}Do you want to install TEST TEST now? Enter 'y' for yes.${Reset}"
+# read TEST_INSTALL
+# if [[ $TEST_INSTALL == y ]]; then
+#     test_install
+# fi
+
+echo "${BCyan}Do you want to install frontend now? Enter 'y' for yes.${Reset}"
+read FRONT_INSTALL
+if [[ $FRONT_INSTALL == y ]]; then
+    front_install
+fi
+
+echo "${BCyan}Will you be mounting a SHARED PARTION?\nEnter 'y' to mount SHARED NTFS partition:${Reset}"
+read MOUNT_SHARED
+if [[ $MOUNT_SHARED == y ]]; then
+    mount_shared
+fi
+
+mkinitcpio_run
+
+yellow_prompt "Basic install is complete"
+read -p "${BPurple}Press [Enter] to exit and reboot${Reset}"
+reboot
